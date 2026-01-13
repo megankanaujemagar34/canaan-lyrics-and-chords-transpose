@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ song.title }}</title>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Mono&display=swap');
+        body {
+            font-family: Arial, sans-serif;
+        }
+        pre {
+            font-family: 'Noto Sans Mono', monospace;
+            white-space: pre;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+        .controls button {
+            padding: 8px 12px;
+            margin-right: 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .chord {
+            color: darkred;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<h1>{{ song.title }}</h1>
+
+<div class="controls">
+    <button onclick="transpose(-1)">➖ Transpose Down</button>
+    <button onclick="transpose(1)">➕ Transpose Up</button>
+</div>
+
+<pre id="song-text">{{ song.lyrics_and_chords }}</pre>
+
+<a href="/">← Back to songs</a>
+
+<script>
+const notes = [
+    "C","C#","D","D#","E","F",
+    "F#","G","G#","A","A#","B"
+];
+
+// Matches: [C], [Am], [Bm7], [Cmaj7], [Dsus4], [F#m9]
+const chordRegex = /\[([A-G])(#|b)?(.*?)]/g;
+
+function transpose(step) {
+    let pre = document.getElementById("song-text");
+    let text = pre.innerText;
+
+    text = text.replace(chordRegex, function(match, root, accidental, suffix) {
+        let base = root + (accidental || "");
+        let newRoot = transposeNote(base, step);
+        return "[" + newRoot + suffix + "]";
+    });
+
+    pre.innerText = text;
+}
+
+function transposeNote(note, step) {
+    let index = notes.indexOf(note);
+    if (index === -1) return note;
+
+    let newIndex = (index + step + notes.length) % notes.length;
+    return notes[newIndex];
+}
+</script>
+
+
+</body>
+</html>
