@@ -35,40 +35,73 @@
     <button onclick="transpose(1)">➕ Transpose Up</button>
 </div>
 
-<pre id="song-text">{{ song.lyrics_and_chords }}</pre>
+<pre id="song-text"></pre>
+
+<script>
+const rawSongText = `{{ song.lyrics_and_chords|escapejs }}`;
+</script>
+
 
 <a href="/">← Back to songs</a>
 
 <script>
-const notes = [
-    "C","C#","D","D#","E","F",
-    "F#","G","G#","A","A#","B"
-];
-
-// Matches: [C], [Am], [Bm7], [Cmaj7], [Dsus4], [F#m9]
+const notes = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
 const chordRegex = /\[([A-G])(#|b)?(.*?)]/g;
 
-function transpose(step) {
-    let pre = document.getElementById("song-text");
-    let text = pre.innerText;
+let currentText = rawSongText;
 
-    text = text.replace(chordRegex, function(match, root, accidental, suffix) {
+renderSong(currentText);
+
+function transpose(step) {
+    currentText = currentText.replace(chordRegex, function(match, root, accidental, suffix) {
         let base = root + (accidental || "");
-        let newRoot = transposeNote(base, step);
-        return "[" + newRoot + suffix + "]";
+        let index = notes.indexOf(base);
+        if (index === -1) return match;
+
+        let newIndex = (index + step + notes.length) % notes.length;
+        return "[" + notes[newIndex] + suffix + "]";
     });
 
-    pre.innerText = text;
+    renderSong(currentText);
 }
 
-function transposeNote(note, step) {
-    let index = notes.indexOf(note);
-    if (index === -1) return note;
+function renderSong(text) {
+    const lines = text.split("\n");
+    let output = "";
 
-    let newIndex = (index + step + notes.length) % notes.length;
-    return notes[newIndex];
+    lines.forEach(line => {
+        if (!line.includes("[")) {
+            output += line + "\n";
+            return;
+        }
+
+        let chordLine = "";
+        let lyricLine = "";
+        let i = 0;
+
+        while (i < line.length) {
+            if (line[i] === "[") {
+                let end = line.indexOf("]", i);
+                let chord = line.substring(i, end + 1);
+
+                chordLine += chord;
+                lyricLine += " ".repeat(chord.length);
+
+                i = end + 1;
+            } else {
+                chordLine += " ";
+                lyricLine += line[i];
+                i++;
+            }
+        }
+
+        output += chordLine + "\n" + lyricLine + "\n";
+    });
+
+    document.getElementById("song-text").innerText = output;
 }
 </script>
+
 
 
 </body>
